@@ -22,14 +22,14 @@ func CreateZipStorage(filename string) *ZipStorage {
 func (z *ZipStorage) Save(data []byte) error {
 	f, err := os.Create(z.GetFilename())
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrSaveStorage, err)
+		return fmt.Errorf("error saving storage: %w", err)
 	}
 
 	defer func() {
 		err = f.Close()
 
 		if err != nil {
-			fmt.Println(fmt.Errorf("%w %s: %w", ErrCloseFile, z.GetFilename(), err))
+			fmt.Println(fmt.Errorf("error closing storage file %s: %w", z.GetFilename(), err))
 		}
 	}()
 
@@ -38,18 +38,18 @@ func (z *ZipStorage) Save(data []byte) error {
 		err = zw.Close()
 
 		if err != nil {
-			fmt.Println(fmt.Errorf("%w: %w", ErrCloseZip, err))
+			fmt.Println(fmt.Errorf("error closing storage: %w", err))
 		}
 	}()
 
 	zf, err := zw.Create("data")
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrSaveStorage, err)
+		return fmt.Errorf("error saving storage: %w", err)
 	}
 
 	_, err = zf.Write(data)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrSaveStorage, err)
+		return fmt.Errorf("error saving storage: %w", err)
 	}
 
 	return nil
@@ -58,31 +58,31 @@ func (z *ZipStorage) Save(data []byte) error {
 func (z *ZipStorage) Load() ([]byte, error) {
 	zr, err := zip.OpenReader(z.GetFilename())
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrLoadStorage, err)
+		return nil, fmt.Errorf("error loading storage: %w", err)
 	}
 	defer func() {
 		err = zr.Close()
 
 		if err != nil {
-			fmt.Println(fmt.Errorf("%w: %w", ErrCloseZip, err))
+			fmt.Println(fmt.Errorf("error closing storage: %w", err))
 		}
 	}()
 
 	if len(zr.File) == 0 {
-		return nil, fmt.Errorf("%w: %w", ErrLoadStorage, ErrEmptyZip)
+		return nil, fmt.Errorf("error loading storage: %w", ErrEmptyZip)
 	}
 
 	file := zr.File[0]
 
 	fc, err := file.Open()
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrLoadStorage, err)
+		return nil, fmt.Errorf("error loading storage: %w", err)
 	}
 	defer func() {
 		err = fc.Close()
 
 		if err != nil {
-			fmt.Println(fmt.Errorf("%w %s: %w", ErrCloseFile, z.GetFilename(), err))
+			fmt.Println(fmt.Errorf("error closing storage file %s: %w", z.GetFilename(), err))
 		}
 	}()
 

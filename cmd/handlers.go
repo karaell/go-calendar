@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"github.com/karaell/app/events"
 	"github.com/karaell/app/logger"
@@ -8,9 +9,9 @@ import (
 	"time"
 )
 
-func handleAdd(c *Cmd, parts []string) error {
+func handleAdd(c *Cmd, parts []string) {
 	if len(parts) < 4 {
-		return fmt.Errorf("%w: %w", ErrAddCmd, ErrCmdFormat)
+		c.print(fmt.Errorf("error add command: %w", ErrCmdFormat).Error())
 	}
 
 	title := parts[1]
@@ -18,29 +19,44 @@ func handleAdd(c *Cmd, parts []string) error {
 	priority := events.Priority(parts[3])
 
 	_, err := c.calendar.AddEvent(title, date, priority)
+
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrAddCmd, err)
+		switch {
+		case errors.Is(err, events.ErrInvalidTitle):
+			c.print("Can't add event because event title is invalid")
+		case errors.Is(err, events.ErrInvalidPriority):
+			c.print("Can't add event because event priority is invalid")
+		case errors.Is(err, events.ErrParseDate):
+			c.print("Can't add event because selected date is invalid")
+		case errors.Is(err, events.ErrTimeInPast):
+			c.print("Can't add event because selected date is invalid: time in past")
+		default:
+			c.print("Can't add event: " + err.Error())
+
+		}
 	}
-	return nil
 }
 
-func handleRemove(c *Cmd, parts []string) error {
+func handleRemove(c *Cmd, parts []string) {
 	if len(parts) < 2 {
-		return fmt.Errorf("%w: %w", ErrRemoveCmd, ErrCmdFormat)
+		c.print(fmt.Errorf("error remove command: %w", ErrCmdFormat).Error())
 	}
 
 	id := parts[1]
 
 	err := c.calendar.RemoveEvent(id)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrRemoveCmd, err)
+		if errors.Is(err, events.ErrNotFoundEvent) {
+			c.print("Can't remove event because event with target id not found. Id: " + id)
+		} else {
+			c.print("Can't remove event: " + err.Error())
+		}
 	}
-	return nil
 }
 
-func handleUpdate(c *Cmd, parts []string) error {
+func handleUpdate(c *Cmd, parts []string) {
 	if len(parts) < 5 {
-		return fmt.Errorf("%w: %w", ErrUpdateCmd, ErrCmdFormat)
+		c.print(fmt.Errorf("error update command: %w", ErrCmdFormat).Error())
 	}
 
 	id := parts[1]
@@ -50,14 +66,25 @@ func handleUpdate(c *Cmd, parts []string) error {
 
 	err := c.calendar.UpdateEvent(id, title, date, priority)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrUpdateCmd, err)
+		switch {
+		case errors.Is(err, events.ErrNotFoundEvent):
+			c.print("Can't update event because event with target id not found. Id: " + id)
+		case errors.Is(err, events.ErrInvalidTitle):
+			c.print("Can't update event because event title is invalid")
+		case errors.Is(err, events.ErrInvalidPriority):
+			c.print("Can't update event because target event priority is invalid")
+		case errors.Is(err, events.ErrParseDate):
+			c.print("Can't update event because selected date is invalid")
+		default:
+			c.print("Can't update event: " + err.Error())
+		}
 	}
-	return nil
+
 }
 
-func handleSetEventReminder(c *Cmd, parts []string) error {
+func handleSetEventReminder(c *Cmd, parts []string) {
 	if len(parts) < 4 {
-		return fmt.Errorf("%w: %w", ErrSetEventReminderCmd, ErrCmdFormat)
+		c.print(fmt.Errorf("error set event reminder command: %w", ErrCmdFormat).Error())
 	}
 
 	id := parts[1]
@@ -66,23 +93,39 @@ func handleSetEventReminder(c *Cmd, parts []string) error {
 
 	err := c.calendar.SetEventReminder(id, message, date)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrSetEventReminderCmd, err)
+		switch {
+		case errors.Is(err, events.ErrNotFoundEvent):
+			c.print("Can't set event reminder because event with target id not found. Id: " + id)
+		case errors.Is(err, events.ErrEmptyMessage):
+			c.print("Can't set event reminder because reminder message is empty")
+		case errors.Is(err, events.ErrParseDate):
+			c.print("Can't set event reminder because selected date is invalid")
+		case errors.Is(err, events.ErrTooLateTime):
+			c.print("Can't set event reminder because reminder time is later than event time")
+		case errors.Is(err, events.ErrTimeInPast):
+			c.print("Can't set event reminder because reminder time is earlier than current time")
+		default:
+			c.print("Can't set event reminder: " + err.Error())
+		}
 	}
-	return nil
 }
 
-func handleCancelEventReminder(c *Cmd, parts []string) error {
+func handleCancelEventReminder(c *Cmd, parts []string) {
 	if len(parts) < 2 {
-		return fmt.Errorf("%w: %w", ErrCancelEventReminderCmd, ErrCmdFormat)
+		c.print(fmt.Errorf("error cancel event reminder command: %w", ErrCmdFormat).Error())
 	}
 
 	id := parts[1]
 
 	err := c.calendar.CancelEventReminder(id)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrCancelEventReminderCmd, err)
+		switch {
+		case errors.Is(err, events.ErrNotFoundEvent):
+			c.print("Can't cancel event reminder because event with target id not found. Id: " + id)
+		default:
+			c.print("Can't cancel event reminder: " + err.Error())
+		}
 	}
-	return nil
 }
 
 func handleList(c *Cmd) {
@@ -124,13 +167,13 @@ func handleExit(c *Cmd) {
 	err := c.calendar.Save()
 	if err != nil {
 		logger.Error("saving calendar failed")
-		c.print(fmt.Errorf("%w: %w", ErrExitCmd, err).Error())
+		c.print(fmt.Errorf("error exit command: %w", err).Error())
 	}
 
 	err = c.SaveLog()
 	if err != nil {
 		logger.Error("saving history log failed")
-		c.print(fmt.Errorf("%w: %w", ErrExitCmd, err).Error())
+		c.print(fmt.Errorf("error exit command: %w", err).Error())
 	}
 
 	close(c.calendar.Notification)
@@ -138,7 +181,7 @@ func handleExit(c *Cmd) {
 
 	err = logger.Close()
 	if err != nil {
-		c.print(fmt.Errorf("%w: %w", ErrExitCmd, err).Error())
+		c.print(fmt.Errorf("error exit command: %w", err).Error())
 	}
 
 	os.Exit(0)

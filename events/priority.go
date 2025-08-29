@@ -17,7 +17,7 @@ func (p Priority) Validate() error {
 	case PriorityLow, PriorityMedium, PriorityHigh:
 		return nil
 	default:
-		return fmt.Errorf("%w: %s", ErrInvalidPriority, p)
+		return fmt.Errorf("invalid priority: %s", p)
 	}
 }
 

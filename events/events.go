@@ -21,24 +21,24 @@ func CreateEvent(title string, startAt string, priority Priority) (*Event, error
 
 	if !isValidTitle(title) {
 		logger.Error(fmt.Sprintf("invalid title for event: %s", title))
-		return nil, fmt.Errorf("%w: %w - %s", ErrCreateEvent, ErrInvalidTitle, title)
+		return nil, fmt.Errorf("error creating event: %w - %s", ErrInvalidTitle, title)
 	}
 
 	date, err := utils.ParseDate(startAt)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to parse date for event: %s", startAt))
-		return nil, fmt.Errorf("%w: %w", ErrCreateEvent, err)
+		return nil, fmt.Errorf("error creating event: %w", err)
 	}
 
 	if date.Before(time.Now()) {
 		logger.Error(fmt.Sprintf("start time in past for event: %s", startAt))
-		return nil, fmt.Errorf("%w: %w", ErrCreateEvent, ErrTimeInPast)
+		return nil, fmt.Errorf("error creating event: %w", ErrTimeInPast)
 	}
 
 	err = priority.Validate()
 	if err != nil {
 		logger.Error(fmt.Sprintf("invalid priority for event: %s", priority))
-		return nil, fmt.Errorf("%w: %w", ErrCreateEvent, err)
+		return nil, fmt.Errorf("error creating event: %w", err)
 	}
 
 	id := utils.GetUniqId()

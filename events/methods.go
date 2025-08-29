@@ -67,12 +67,12 @@ func (e *Event) AddReminder(message string, sendAt string, notifier func(msg str
 	}
 
 	if date.Before(time.Now()) {
-		logger.Warning(fmt.Sprintf("reminder time in past for event %s: %s", e.ID, sendAt))
+		logger.Error(fmt.Sprintf("reminder time in past for event %s: %s", e.ID, sendAt))
 		return ErrTimeInPast
 	}
 
 	if date.After(e.StartAt) {
-		logger.Warning(fmt.Sprintf("reminder time after event start time for event %s: %s", e.ID, sendAt))
+		logger.Error(fmt.Sprintf("reminder time after event start time for event %s: %s", e.ID, sendAt))
 		return ErrTooLateTime
 	}
 

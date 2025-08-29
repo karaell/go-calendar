@@ -2,12 +2,9 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/c-bata/go-prompt"
 	"github.com/google/shlex"
-	"github.com/karaell/app/calendar"
-	"github.com/karaell/app/events"
 	"github.com/karaell/app/logger"
 	"github.com/karaell/app/storage"
 	"strings"
@@ -34,76 +31,15 @@ func (c *Cmd) executor(input string) {
 
 	switch cmd {
 	case "add":
-		err = handleAdd(c, parts)
-
-		if errors.Is(err, ErrCmdFormat) {
-			c.print("Can't add event because of invalid command format, format is: " + AddCmd)
-			return
-		}
-
-		if err != nil {
-			c.print("Can't add event: " + err.Error())
-		}
+		handleAdd(c, parts)
 	case "update":
-		err = handleUpdate(c, parts)
-
-		switch {
-		case errors.Is(err, ErrCmdFormat):
-			c.print("Can't update event because of invalid command format, format is: " + UpdateCmd)
-		case errors.Is(err, calendar.ErrNotFoundEvent):
-			c.print("Can't update event because target event is not found")
-		case errors.Is(err, events.ErrInvalidTitle):
-			c.print("Can't update event because event title is invalid")
-		case errors.Is(err, events.ErrInvalidPriority):
-			c.print("Can't update event because target event priority is invalid")
-		case errors.Is(err, events.ErrParseDate):
-			c.print("Can't update event because selected date is invalid")
-		default:
-			if err != nil {
-				c.print("Can't update event: " + err.Error())
-			}
-		}
+		handleUpdate(c, parts)
 	case "remove":
-		err = handleRemove(c, parts)
-
-		if errors.Is(err, ErrCmdFormat) {
-			c.print("Can't remove event because of invalid command format, format is: " + RemoveCmd)
-			return
-		}
-
-		if err != nil {
-			c.print("Can't remove event: " + err.Error())
-		}
+		handleRemove(c, parts)
 	case "add_event_reminder":
-		err = handleSetEventReminder(c, parts)
-
-		switch {
-		case errors.Is(err, ErrCmdFormat):
-			c.print("Can't set event reminder because of invalid command format, format is: " + SetEventReminderCmd)
-		case errors.Is(err, calendar.ErrNotFoundEvent):
-			c.print("Can't set event reminder because target event is not found")
-		case errors.Is(err, events.ErrEmptyMessage):
-			c.print("Can't set event reminder with empty message")
-		case errors.Is(err, events.ErrTooLateTime):
-			c.print("Can't set event reminder because reminder time is later than event time")
-		case errors.Is(err, events.ErrTimeInPast):
-			c.print("Can't set event reminder because reminder time is earlier than current time")
-		default:
-			if err != nil {
-				c.print("Can't set event reminder: " + err.Error())
-			}
-		}
+		handleSetEventReminder(c, parts)
 	case "remove_event_reminder":
-		err = handleCancelEventReminder(c, parts)
-
-		if errors.Is(err, ErrCmdFormat) {
-			c.print("Can't cancel event reminder because of invalid command format, format is: " + CancelEventReminderCmd)
-			return
-		}
-
-		if err != nil {
-			c.print("Can't remove event reminder: " + err.Error())
-		}
+		handleCancelEventReminder(c, parts)
 	case "help":
 		handleHelp(c)
 	case "list":
@@ -157,13 +93,13 @@ func (c *Cmd) SaveLog() error {
 
 	if err != nil {
 		logger.Error("save console history log failed")
-		return fmt.Errorf("%w: %w", ErrSaveHistoryLog, err)
+		return fmt.Errorf("error save console history log: %w", err)
 	}
 
 	err = c.storage.Save(data)
 	if err != nil {
 		logger.Error("save console history log failed")
-		return fmt.Errorf("%w: %w", ErrSaveHistoryLog, err)
+		return fmt.Errorf("error save console history log: %w", err)
 	}
 
 	logger.Info("save console history log success")
@@ -174,18 +110,18 @@ func (c *Cmd) LoadLog() error {
 	data, err := c.storage.Load()
 	if err != nil {
 		logger.Error("load console history log failed")
-		return fmt.Errorf("%w: %w", ErrLoadHistoryLog, err)
+		return fmt.Errorf("error load console history log: %w", err)
 	}
 
 	if len(data) == 0 {
 		logger.Warning("load console history log failed, empty storage file")
-		return fmt.Errorf("%w: %w", ErrLoadHistoryLog, storage.ErrEmptyFile)
+		return fmt.Errorf("error load console history log: %w", storage.ErrEmptyFile)
 	}
 
 	err = json.Unmarshal(data, &c.log)
 	if err != nil {
 		logger.Error("load console history log failed")
-		return fmt.Errorf("%w: %w", ErrLoadHistoryLog, err)
+		return fmt.Errorf("error load console history log: %w", err)
 	}
 
 	logger.Info("load console history log success")

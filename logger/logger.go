@@ -67,7 +67,7 @@ func Close() error {
 	err := loggerFile.Close()
 
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrCloseFile, err)
+		return fmt.Errorf("error close logger file: %w", err)
 	}
 
 	return nil

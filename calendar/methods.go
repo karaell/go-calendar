@@ -12,7 +12,7 @@ func (c *Calendar) AddEvent(title string, startAt string, priority events.Priori
 	e, err := events.CreateEvent(title, startAt, priority)
 	if err != nil {
 		logger.Error("add event failed")
-		return nil, fmt.Errorf("%w: %w", ErrAddEvent, err)
+		return nil, fmt.Errorf("error adding event: %w", err)
 	}
 
 	c.calendarEvents[e.ID] = e
@@ -25,7 +25,7 @@ func (c *Calendar) RemoveEvent(id string) error {
 	_, ok := c.calendarEvents[id]
 	if !ok {
 		logger.Error("remove event failed, event not found")
-		return fmt.Errorf("%w: %w Id: %s", ErrRemoveEvent, ErrNotFoundEvent, id)
+		return fmt.Errorf("error removing event: %w Id: %s", events.ErrNotFoundEvent, id)
 	}
 
 	delete(c.calendarEvents, id)
@@ -38,13 +38,13 @@ func (c *Calendar) UpdateEvent(id string, title string, startAt string, priority
 	e, ok := c.calendarEvents[id]
 	if !ok {
 		logger.Error("update event failed, event not found")
-		return fmt.Errorf("%w: %w Id: %s", ErrUpdateEvent, ErrNotFoundEvent, id)
+		return fmt.Errorf("error updating event: %w Id: %s", events.ErrNotFoundEvent, id)
 	}
 
 	err := e.Update(title, startAt, priority)
 	if err != nil {
 		logger.Error("update event failed")
-		return fmt.Errorf("%w: %w", ErrUpdateEvent, err)
+		return fmt.Errorf("error updating event: %w", err)
 	}
 
 	logger.Info("update event success")
@@ -55,13 +55,13 @@ func (c *Calendar) SetEventReminder(id string, message string, sendAt string) er
 	e, ok := c.calendarEvents[id]
 	if !ok {
 		logger.Error("set event reminder failed, event not found")
-		return fmt.Errorf("%w: %w Id: %s", ErrSetEventReminder, ErrNotFoundEvent, id)
+		return fmt.Errorf("error setting event reminder: %w Id: %s", events.ErrNotFoundEvent, id)
 	}
 
 	err := e.AddReminder(message, sendAt, c.Notify)
 	if err != nil {
 		logger.Error("set event reminder failed")
-		return fmt.Errorf("%w: %w", ErrSetEventReminder, err)
+		return fmt.Errorf("error setting event reminder: %w", err)
 	}
 	logger.Info("set event reminder success")
 	return nil
@@ -71,7 +71,7 @@ func (c *Calendar) CancelEventReminder(id string) error {
 	e, ok := c.calendarEvents[id]
 	if !ok {
 		logger.Error("cancel event reminder failed, event not found")
-		return fmt.Errorf("%w: %w Id: %s", ErrCancelEventReminder, ErrNotFoundEvent, id)
+		return fmt.Errorf("error canceling event reminder: %w Id: %s", events.ErrNotFoundEvent, id)
 	}
 
 	e.RemoveReminder()
@@ -92,13 +92,13 @@ func (c *Calendar) Save() error {
 	data, err := json.Marshal(c.calendarEvents)
 	if err != nil {
 		logger.Error("save calendar failed, marshal failed")
-		return fmt.Errorf("%w: %w", ErrSaveCalendar, err)
+		return fmt.Errorf("error saving calendar: %w", err)
 	}
 
 	err = c.storage.Save(data)
 	if err != nil {
 		logger.Error("save calendar failed, saving to storage failed")
-		return fmt.Errorf("%w: %w", ErrSaveCalendar, err)
+		return fmt.Errorf("error saving calendar: %w", err)
 	}
 
 	logger.Info("save calendar success")
@@ -109,18 +109,18 @@ func (c *Calendar) Load() error {
 	data, err := c.storage.Load()
 	if err != nil {
 		logger.Error("load calendar failed, loading from storage failed")
-		return fmt.Errorf("%w: %w", ErrLoadCalendar, err)
+		return fmt.Errorf("error loading calendar: %w", err)
 	}
 
 	if len(data) == 0 {
 		logger.Warning("load calendar failed, empty storage file")
-		return fmt.Errorf("%w: %w", ErrLoadCalendar, storage.ErrEmptyFile)
+		return fmt.Errorf("error loading calendar: %w", storage.ErrEmptyFile)
 	}
 
 	err = json.Unmarshal(data, &c.calendarEvents)
 	if err != nil {
 		logger.Error("load calendar failed, unmarshal failed")
-		return fmt.Errorf("%w: %w", ErrLoadCalendar, err)
+		return fmt.Errorf("error loading calendar: %w", err)
 	}
 
 	logger.Info("load calendar success")
