@@ -11,7 +11,8 @@ import (
 
 func handleAdd(c *Cmd, parts []string) {
 	if len(parts) < 4 {
-		c.print(fmt.Errorf("error add command: %w", ErrCmdFormat).Error())
+		c.print("Can't add event because command format is incorrect, valid format: " + AddCmd)
+		return
 	}
 
 	title := parts[1]
@@ -39,7 +40,8 @@ func handleAdd(c *Cmd, parts []string) {
 
 func handleRemove(c *Cmd, parts []string) {
 	if len(parts) < 2 {
-		c.print(fmt.Errorf("error remove command: %w", ErrCmdFormat).Error())
+		c.print("Can't remove event because command format is incorrect, valid format: " + RemoveCmd)
+		return
 	}
 
 	id := parts[1]
@@ -56,7 +58,8 @@ func handleRemove(c *Cmd, parts []string) {
 
 func handleUpdate(c *Cmd, parts []string) {
 	if len(parts) < 5 {
-		c.print(fmt.Errorf("error update command: %w", ErrCmdFormat).Error())
+		c.print("Can't update event because command format is incorrect, valid format: " + UpdateCmd)
+		return
 	}
 
 	id := parts[1]
@@ -84,7 +87,8 @@ func handleUpdate(c *Cmd, parts []string) {
 
 func handleSetEventReminder(c *Cmd, parts []string) {
 	if len(parts) < 4 {
-		c.print(fmt.Errorf("error set event reminder command: %w", ErrCmdFormat).Error())
+		c.print("Can't set event reminder because command format is incorrect, valid format: " + SetEventReminderCmd)
+		return
 	}
 
 	id := parts[1]
@@ -112,7 +116,8 @@ func handleSetEventReminder(c *Cmd, parts []string) {
 
 func handleCancelEventReminder(c *Cmd, parts []string) {
 	if len(parts) < 2 {
-		c.print(fmt.Errorf("error cancel event reminder command: %w", ErrCmdFormat).Error())
+		c.print("Can't cancel event reminder because command format is incorrect, valid format: " + CancelEventReminderCmd)
+		return
 	}
 
 	id := parts[1]
